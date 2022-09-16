@@ -17,15 +17,15 @@ pl-dcm2mha_cnvtr
 Abstract
 --------
 
-An app to ...
+An app  to convert dcm files to mha and vice-versa 
 
 
 Description
 -----------
 
 
-``dcm2mha_cnvtr`` is a *ChRIS ds-type* application that takes in ... as ... files
-and produces ...
+``dcm2mha_cnvtr`` is a *ChRIS ds-type* application that takes in .mha/.dcm as input files
+and produces .dcm/.mha files as output
 
 
 Usage
@@ -34,6 +34,7 @@ Usage
 .. code::
 
     docker run --rm fnndsc/pl-dcm2mha_cnvtr dcm2mha_cnvtr
+        [-f/--inputFileFilter <inputFileFilter>]
         [-h|--help]
         [--json] [--man] [--meta]
         [--savejson <DIR>]
@@ -46,7 +47,12 @@ Arguments
 ~~~~~~~~~
 
 .. code::
-
+    [-f/--inputFileFilter <inputFileFilter>]
+    A glob pattern string, default is "**/*.mha",
+    representing the input file that we want to
+    convert. You can choose either .mha or .dcm
+    files
+        
     [-h] [--help]
     If specified, show help message and exit.
     
@@ -85,7 +91,7 @@ You need to specify input and output directories using the `-v` flag to `docker 
 
     docker run --rm -u $(id -u)                             \
         -v $(pwd)/in:/incoming -v $(pwd)/out:/outgoing      \
-        fnndsc/pl-dcm2mha_cnvtr dcm2mha_cnvtr                        \
+        fnndsc/pl-dcm2mha_cnvtr dcm2mha_cnvtr               \
         /incoming /outgoing
 
 

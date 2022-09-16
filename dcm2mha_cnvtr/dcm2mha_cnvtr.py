@@ -16,7 +16,6 @@ import SimpleITK as sitk
 import pydicom as dicom
 import glob
 import numpy as np
-from PIL import Image
 Gstr_title = r"""
      _                 _____           _                            _        
     | |               / __  \         | |                          | |       
@@ -30,19 +29,14 @@ Gstr_title = r"""
 
 Gstr_synopsis = """
 
-(Edit this in-line help for app specifics. At a minimum, the 
-flags below are supported -- in the case of DS apps, both
-positional arguments <inputDir> and <outputDir>; for FS and TS apps
-only <outputDir> -- and similarly for <in> <out> directories
-where necessary.)
-
     NAME
 
        dcm2mha_cnvtr
 
     SYNOPSIS
 
-        docker run --rm fnndsc/pl-dcm2mha_cnvtr dcm2mha_cnvtr                     \\
+        docker run --rm fnndsc/pl-dcm2mha_cnvtr dcm2mha_cnvtr           \\
+            [-f/--inputFileFilter <inputFileFilter>]                    \\
             [-h] [--help]                                               \\
             [--json]                                                    \\
             [--man]                                                     \\
@@ -67,6 +61,11 @@ where necessary.)
         `dcm2mha_cnvtr` ...
 
     ARGS
+        [-f/--inputFileFilter <inputFileFilter>]
+        A glob pattern string, default is "**/*.mha",
+        representing the input file that we want to
+        convert. You can choose either .mha or .dcm
+        files
 
         [-h] [--help]
         If specified, show help message and exit.
@@ -96,7 +95,7 @@ class Dcm2mha_cnvtr(ChrisApp):
     An app to ...
     """
     PACKAGE                 = __package__
-    TITLE                   = 'A ChRIS plugin app'
+    TITLE                   = 'A ChRIS plugin app to convert dcm files to mha and vice-versa'
     CATEGORY                = ''
     TYPE                    = 'ds'
     ICON                    = ''   # url of an icon image
@@ -174,10 +173,6 @@ class Dcm2mha_cnvtr(ChrisApp):
         rescaled_image = (np.maximum(im,0)/im.max())*255 # float pixels
         final_image = np.uint8(rescaled_image) # integers pixels
         final_image = np.expand_dims(final_image, axis=0)
-        print(final_image.shape)
-
-
-        #final_image = Image.fromarray(final_image)
 
         self.write(sitk.GetImageFromArray(final_image), mha_path, save_dir, compress)
         

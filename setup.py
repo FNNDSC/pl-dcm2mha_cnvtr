@@ -6,8 +6,8 @@ with open(path.join(path.dirname(path.abspath(__file__)), 'README.rst')) as f:
 
 setup(
     name             = 'dcm2mha_cnvtr',
-    version          = '0.4',
-    description      = 'An app to ...',
+    version          = '1.0.0',
+    description      = 'An app to convert dcm files to mha and vice-versa',
     long_description = readme,
     author           = 'FNNDSC',
     author_email     = 'dev@babyMRI.org',
