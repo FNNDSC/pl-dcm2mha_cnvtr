@@ -16,6 +16,7 @@ import SimpleITK as sitk
 import pydicom as dicom
 import glob
 import numpy as np
+from PIL import Image
 Gstr_title = r"""
      _                 _____           _                            _        
     | |               / __  \         | |                          | |       
@@ -92,7 +93,7 @@ Gstr_synopsis = """
 
 class Dcm2mha_cnvtr(ChrisApp):
     """
-    An app to ...
+    An app to convert dicom images to .mha and vice versa
     """
     PACKAGE                 = __package__
     TITLE                   = 'A ChRIS plugin app to convert dcm files to mha and vice-versa'
@@ -131,6 +132,13 @@ class Dcm2mha_cnvtr(ChrisApp):
                             help         = 'Input file filter',
                             default      = '**/*.mha')
                             
+        self.add_argument(  '--saveAsPng','-s',
+                            dest         = 'saveAsPng',
+                            type         = bool,
+                            optional     = True,
+                            help         = 'Save .mha file as png',
+                            default      = False)
+                            
     def run(self, options):
         """
         Define the code to be run by this plugin app.
@@ -153,7 +161,7 @@ class Dcm2mha_cnvtr(ChrisApp):
                 save_path = datapath.split('/')[-1]
                 save_path = save_path.replace('.mha','')
                 save_path = os.path.join(options.outputdir,save_path)
-                self.convert_to_dcm(datapath,save_path)
+                self.convert_to_dcm(datapath,save_path,options.saveAsPng)
             else:
                 save_path = datapath.split('/')[-1]
                 save_path = save_path.replace('.dcm','.mha')
@@ -191,7 +199,7 @@ class Dcm2mha_cnvtr(ChrisApp):
         writer.SetFileName(path)
         writer.Execute(img)
              
-    def convert_to_dcm(self, mha_path,dicom_path):
+    def convert_to_dcm(self, mha_path,dicom_path,saveAsPng):
         # parse input arguments
         # 1. img_filename: name of image file (incl. extension)
         img_filename = mha_path
@@ -217,9 +225,23 @@ class Dcm2mha_cnvtr(ChrisApp):
                   ("0008|103e", "Created-SimpleITK")] # Series Description
 
 
-        list(map(lambda i: self.writeSlices(series_tag_values, img, i, output_path), range(img.GetDepth())))
+        list(map(lambda i: self.writeSlices(series_tag_values, img, i, output_path,saveAsPng), range(img.GetDepth())))
         
-    def writeSlices(self, series_tag_values, img, i, output_path):
+        if saveAsPng:
+            files = glob.glob(output_path+"/*")
+            sample = dicom.dcmread(files[0], force=True)
+            sample = sample.pixel_array
+            result = np.empty(sample.shape,dtype='uint8')
+            for file in files:
+                ds = dicom.dcmread(file)
+                new_image = ds.pixel_array.astype(float)
+                scaled_image = (np.maximum(new_image, 0) / new_image.max()) * 255.0
+                scaled_image = np.uint8(scaled_image)
+                result = result + scaled_image
+            final_image = Image.fromarray(result)
+            final_image.save(os.path.join(output_path,'composite.png'))
+
+    def writeSlices(self, series_tag_values, img, i, output_path, saveAsPng):
         castFilter = sitk.CastImageFilter()
         castFilter.SetOutputPixelType(sitk.sitkInt16)
     
@@ -244,7 +266,7 @@ class Dcm2mha_cnvtr(ChrisApp):
         # Use the study/series/frame of reference information given in the meta-data
         # dictionary and not the automatically generated information from the file IO
         writer.KeepOriginalImageUIDOn()
-        
+ 
         # Write to the output directory and add the extension dcm, to force writing in DICOM format.
         writer.SetFileName(os.path.join(output_path,str(i).zfill(4)+'.dcm'))
 
@@ -252,3 +274,4 @@ class Dcm2mha_cnvtr(ChrisApp):
             os.makedirs(output_path)
 
         writer.Execute(image_slice)
+        

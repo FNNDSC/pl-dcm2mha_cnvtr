@@ -3,3 +3,4 @@ nose~=1.3.7
 pydicom
 SimpleITK
 numpy
+pillow
