@@ -145,6 +145,12 @@ class Dcm2mha_cnvtr(ChrisApp):
                             optional     = True,
                             help         = 'Name of the composite png file',
                             default      = 'composite.png')
+        self.add_argument(  '--threshold','-t',
+                            dest         = 'threshold',
+                            type         = int,
+                            optional     = True,
+                            help         = 'Precision threshold for landmark points. Default is 50',
+                            default      = 50)
                             
     def run(self, options):
         """
@@ -168,7 +174,7 @@ class Dcm2mha_cnvtr(ChrisApp):
                 save_path = datapath.split('/')[-1]
                 save_path = save_path.replace('.mha','')
                 save_path = os.path.join(options.outputdir,save_path)
-                self.convert_to_dcm(datapath,save_path,options.saveAsPng, options.compositeName)
+                self.convert_to_dcm(datapath,save_path,options.saveAsPng, options.compositeName, options.threshold)
             else:
                 save_path = datapath.split('/')[-1]
                 save_path = save_path.replace('.dcm','.mha')
@@ -206,7 +212,7 @@ class Dcm2mha_cnvtr(ChrisApp):
         writer.SetFileName(path)
         writer.Execute(img)
              
-    def convert_to_dcm(self, mha_path,dicom_path,saveAsPng,compositeName):
+    def convert_to_dcm(self, mha_path,dicom_path,saveAsPng,compositeName, threshold):
         # parse input arguments
         # 1. img_filename: name of image file (incl. extension)
         img_filename = mha_path
@@ -243,11 +249,13 @@ class Dcm2mha_cnvtr(ChrisApp):
                 scaled_image = (np.maximum(new_image, 0) / new_image.max()) * 255.0
                 result = np.uint8(scaled_image)
             else:
-                result = np.empty(sample.shape,dtype='uint8')
+                result = np.zeros(sample.shape,dtype='uint8')
                 for file in files:
                     ds = dicom.dcmread(file)
                     new_image = ds.pixel_array.astype(float)
                     scaled_image = (np.maximum(new_image, 0) / new_image.max()) * 255.0
+                    max_value = scaled_image.max()
+                    scaled_image[scaled_image<(max_value-threshold)] = 0
                     scaled_image = np.uint8(scaled_image)
                     result = result + scaled_image
             final_image = Image.fromarray(result)
