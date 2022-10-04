@@ -34,7 +34,10 @@ Usage
 .. code::
 
     docker run --rm fnndsc/pl-dcm2mha_cnvtr dcm2mha_cnvtr
-        [-f/--inputFileFilter <inputFileFilter>]
+        [-f|--inputFileFilter <inputFileFilter>]
+        [-s|--saveAsPng]                                           
+        [-n|--imageName <pngFileName>]                             
+        [-p|--filterPerc <filterPercentage>]                        
         [-h|--help]
         [--json] [--man] [--meta]
         [--savejson <DIR>]
@@ -47,11 +50,24 @@ Arguments
 ~~~~~~~~~
 
 .. code::
-    [-f/--inputFileFilter <inputFileFilter>]
+    [-f|--inputFileFilter <inputFileFilter>]
     A glob pattern string, default is "**/*.mha",
     representing the input file that we want to
     convert. You can choose either .mha or .dcm
     files
+    
+    [-s|--saveAsPng]  
+    If specified, generate a resultant PNG image along with dicoms
+                                                 
+    [-n|--imageName <pngFileName>]
+    The name of the resultant PNG file. Default is "composite.png"
+                                               
+    [-p|--filterPerc <filterPercentage>]
+    An integer value that represents the lowest percentage of the
+    maximum intensity of the PNG image that should be set to 0. 
+    This field is particularly important if there is too much noise 
+    in an image and we want to get a sharper resultant PNG. Default
+    is 30               
         
     [-h] [--help]
     If specified, show help message and exit.

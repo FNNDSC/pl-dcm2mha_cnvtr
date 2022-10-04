@@ -37,7 +37,10 @@ Gstr_synopsis = """
     SYNOPSIS
 
         docker run --rm fnndsc/pl-dcm2mha_cnvtr dcm2mha_cnvtr           \\
-            [-f/--inputFileFilter <inputFileFilter>]                    \\
+            [-f|--inputFileFilter <inputFileFilter>]                    \\
+            [-s|--saveAsPng]                                            \\
+            [-n|--imageName <pngFileName>]                              \\
+            [-p|--filterPerc <filterPercentage>]                        \\
             [-h] [--help]                                               \\
             [--json]                                                    \\
             [--man]                                                     \\
@@ -54,7 +57,7 @@ Gstr_synopsis = """
 
             docker run --rm -u $(id -u)                             \
                 -v $(pwd)/in:/incoming -v $(pwd)/out:/outgoing      \
-                fnndsc/pl-dcm2mha_cnvtr dcm2mha_cnvtr                        \
+                fnndsc/pl-dcm2mha_cnvtr dcm2mha_cnvtr               \
                 /incoming /outgoing
 
     DESCRIPTION
@@ -62,11 +65,24 @@ Gstr_synopsis = """
         `dcm2mha_cnvtr` ...
 
     ARGS
-        [-f/--inputFileFilter <inputFileFilter>]
+        [-f|--inputFileFilter <inputFileFilter>]
         A glob pattern string, default is "**/*.mha",
         representing the input file that we want to
         convert. You can choose either .mha or .dcm
         files
+        
+        [-s|--saveAsPng]  
+        If specified, generate a resultant PNG image along with dicoms
+                                                 
+        [-n|--imageName <pngFileName>]
+        The name of the resultant PNG file. Default is "composite.png"
+                                               
+        [-p|--filterPerc <filterPercentage>]
+        An integer value that represents the lowest percentage of the
+        maximum intensity of the PNG image that should be set to 0. 
+        This field is particularly important if there is too much noise 
+        in an image and we want to get a sharper resultant PNG. Default
+        is 30                                     
 
         [-h] [--help]
         If specified, show help message and exit.
@@ -139,18 +155,18 @@ class Dcm2mha_cnvtr(ChrisApp):
                             help         = 'Save .mha file as png',
                             default      = False)
                             
-        self.add_argument(  '--compositeName','-n',
-                            dest         = 'compositeName',
+        self.add_argument(  '--imageName','-n',
+                            dest         = 'imageName',
                             type         = str,
                             optional     = True,
-                            help         = 'Name of the composite png file',
+                            help         = 'Name of the png file',
                             default      = 'composite.png')
-        self.add_argument(  '--threshold','-t',
-                            dest         = 'threshold',
+        self.add_argument(  '--filterPerc','-p',
+                            dest         = 'filterPerc',
                             type         = int,
                             optional     = True,
-                            help         = 'Precision threshold for landmark points. Default is 50',
-                            default      = 50)
+                            help         = 'Specify the lowest percentage of pixel values to be set to zero',
+                            default      = 30)
                             
     def run(self, options):
         """
@@ -174,7 +190,7 @@ class Dcm2mha_cnvtr(ChrisApp):
                 save_path = datapath.split('/')[-1]
                 save_path = save_path.replace('.mha','')
                 save_path = os.path.join(options.outputdir,save_path)
-                self.convert_to_dcm(datapath,save_path,options.saveAsPng, options.compositeName, options.threshold)
+                self.convert_to_dcm(datapath,save_path,options.saveAsPng, options.imageName, options.filterPerc)
             else:
                 save_path = datapath.split('/')[-1]
                 save_path = save_path.replace('.dcm','.mha')
@@ -212,7 +228,7 @@ class Dcm2mha_cnvtr(ChrisApp):
         writer.SetFileName(path)
         writer.Execute(img)
              
-    def convert_to_dcm(self, mha_path,dicom_path,saveAsPng,compositeName, threshold):
+    def convert_to_dcm(self, mha_path,dicom_path,saveAsPng,imageName, filterPerc):
         # parse input arguments
         # 1. img_filename: name of image file (incl. extension)
         img_filename = mha_path
@@ -242,7 +258,7 @@ class Dcm2mha_cnvtr(ChrisApp):
         
         if saveAsPng:
             files = glob.glob(output_path+"/*")
-            sample = dicom.dcmread(files[0], force=True)
+            sample = dicom.dcmread(files[0])
             sample = sample.pixel_array
             if len(files) == 1:
                 new_image =sample.astype(float)
@@ -253,13 +269,21 @@ class Dcm2mha_cnvtr(ChrisApp):
                 for file in files:
                     ds = dicom.dcmread(file)
                     new_image = ds.pixel_array.astype(float)
+                    
+                    # scale the image in the range of 1:255
                     scaled_image = (np.maximum(new_image, 0) / new_image.max()) * 255.0
+                    
+                    # Maximum pixel value in the dicom image
                     max_value = scaled_image.max()
-                    scaled_image[scaled_image<(max_value-threshold)] = 0
+                    
+                    # lowest pixel value to filter out
+                    max_filter_value = (filterPerc/100.0)*max_value
+                    scaled_image[scaled_image<=max_filter_value] = 0
+                    
                     scaled_image = np.uint8(scaled_image)
                     result = result + scaled_image
             final_image = Image.fromarray(result)
-            final_image.save(os.path.join(output_path,compositeName))
+            final_image.save(os.path.join(output_path,imageName))
 
     def writeSlices(self, series_tag_values, img, i, output_path):
         castFilter = sitk.CastImageFilter()
