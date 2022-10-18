@@ -155,6 +155,13 @@ class Dcm2mha_cnvtr(ChrisApp):
                             help         = 'Save .mha file as png',
                             default      = False)
                             
+        self.add_argument(  '--rotate','-r',
+                            dest         = 'rotate',
+                            type         = int,
+                            optional     = True,
+                            help         = 'Rotate input image in a anti-clockwise direction',
+                            default      = 0)
+                            
         self.add_argument(  '--imageName','-n',
                             dest         = 'imageName',
                             type         = str,
@@ -196,7 +203,7 @@ class Dcm2mha_cnvtr(ChrisApp):
                 save_path = save_path.replace('.dcm','.mha')
                 save_dir = os.path.join(options.outputdir,'mha')
                 save_path = os.path.join(options.outputdir,'mha',save_path)
-                self.convert_to_mha(datapath,save_path, save_dir)
+                self.convert_to_mha(datapath,save_path, save_dir,options.rotate)
         
     def show_man_page(self):
         """
@@ -204,11 +211,14 @@ class Dcm2mha_cnvtr(ChrisApp):
         """
         print(Gstr_synopsis)
     
-    def convert_to_mha(self, dicom_path,mha_path,save_dir,compress=True):
+    def convert_to_mha(self, dicom_path,mha_path,save_dir,rotate,compress=True):
         ds = dicom.dcmread(dicom_path)
         im = ds.pixel_array.astype(float)
         rescaled_image = (np.maximum(im,0)/im.max())*255 # float pixels
         final_image = np.uint8(rescaled_image) # integers pixels
+        num_rotations = int(rotate/90)
+        for i in range(1,num_rotations):
+            final_image = np.rot90(final_image)
         final_image = np.expand_dims(final_image, axis=0)
 
         self.write(sitk.GetImageFromArray(final_image), mha_path, save_dir, compress)
