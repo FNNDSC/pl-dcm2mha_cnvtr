@@ -41,6 +41,7 @@ Gstr_synopsis = """
             [-s|--saveAsPng]                                            \\
             [-n|--imageName <pngFileName>]                              \\
             [-p|--filterPerc <filterPercentage>]                        \\
+            [-r| --rotate <rotateAngle>]                                \\
             [-h] [--help]                                               \\
             [--json]                                                    \\
             [--man]                                                     \\
@@ -82,7 +83,12 @@ Gstr_synopsis = """
         maximum intensity of the PNG image that should be set to 0. 
         This field is particularly important if there is too much noise 
         in an image and we want to get a sharper resultant PNG. Default
-        is 30                                     
+        is 30 
+        
+        [-r| --rotate <rotateAngle>]  
+        An integer value in multiples of 90 that represents a rotation
+        angle. The input image will be rotated anticlockwise for the 
+        provide angle                                 
 
         [-h] [--help]
         If specified, show help message and exit.
@@ -217,7 +223,7 @@ class Dcm2mha_cnvtr(ChrisApp):
         rescaled_image = (np.maximum(im,0)/im.max())*255 # float pixels
         final_image = np.uint8(rescaled_image) # integers pixels
         num_rotations = int(rotate/90)
-        for i in range(1,num_rotations):
+        for i in range(0,num_rotations):
             final_image = np.rot90(final_image)
         final_image = np.expand_dims(final_image, axis=0)
 

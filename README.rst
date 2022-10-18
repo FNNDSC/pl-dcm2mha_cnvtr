@@ -37,7 +37,8 @@ Usage
         [-f|--inputFileFilter <inputFileFilter>]
         [-s|--saveAsPng]                                           
         [-n|--imageName <pngFileName>]                             
-        [-p|--filterPerc <filterPercentage>]                        
+        [-p|--filterPerc <filterPercentage>]   
+        [-r| --rotate <rotateAngle>]                     
         [-h|--help]
         [--json] [--man] [--meta]
         [--savejson <DIR>]
@@ -67,7 +68,12 @@ Arguments
     maximum intensity of the PNG image that should be set to 0. 
     This field is particularly important if there is too much noise 
     in an image and we want to get a sharper resultant PNG. Default
-    is 30               
+    is 30
+    
+    [-r| --rotate <rotateAngle>]  
+    An integer value in multiples of 90 that represents a rotation
+    angle. The input image will be rotated anticlockwise for the 
+    provide angle                
         
     [-h] [--help]
     If specified, show help message and exit.
