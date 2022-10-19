@@ -51,6 +51,7 @@ Arguments
 ~~~~~~~~~
 
 .. code::
+
     [-f|--inputFileFilter <inputFileFilter>]
     A glob pattern string, default is "**/*.mha",
     representing the input file that we want to
