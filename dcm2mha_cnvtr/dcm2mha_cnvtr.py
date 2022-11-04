@@ -17,6 +17,8 @@ import pydicom as dicom
 import glob
 import numpy as np
 from PIL import Image
+from skimage.transform import resize
+import csv
 Gstr_title = r"""
      _                 _____           _                            _        
     | |               / __  \         | |                          | |       
@@ -174,12 +176,20 @@ class Dcm2mha_cnvtr(ChrisApp):
                             optional     = True,
                             help         = 'Name of the png file',
                             default      = 'composite.png')
+                            
         self.add_argument(  '--filterPerc','-p',
                             dest         = 'filterPerc',
                             type         = int,
                             optional     = True,
                             help         = 'Specify the lowest percentage of pixel values to be set to zero',
                             default      = 30)
+                            
+        self.add_argument(  '--dimensionFile','-d',
+                            dest         = 'dimensionFile',
+                            type         = str,
+                            optional     = True,
+                            help         = 'Specify the lowest percentage of pixel values to be set to zero',
+                            default      = "dimension.csv")
                             
     def run(self, options):
         """
@@ -194,6 +204,17 @@ class Dcm2mha_cnvtr(ChrisApp):
             print("%20s: %-40s" % (k, v))
         print("")
         
+        csv_path = os.path.join(options.inputdir,options.dimensionFile)
+        
+        data = {}
+        
+        with open(csv_path, encoding='utf-8') as csvf:
+            csvReader = csv.reader(csvf)
+            
+            for rows in csvReader:
+                key = rows[0]
+                data[key] = (int(rows[1]),int(rows[2]))
+        
         str_glob = '%s/%s' % (options.inputdir,options.inputFileFilter)
         
         l_datapath = glob.glob(str_glob, recursive=True)
@@ -203,7 +224,7 @@ class Dcm2mha_cnvtr(ChrisApp):
                 save_path = datapath.split('/')[-1]
                 save_path = save_path.replace('.mha','')
                 save_path = os.path.join(options.outputdir,save_path)
-                self.convert_to_dcm(datapath,save_path,options.saveAsPng, options.imageName, options.filterPerc)
+                self.convert_to_dcm(datapath,save_path,options.saveAsPng, options.imageName, options.filterPerc,data)
             else:
                 save_path = datapath.split('/')[-1]
                 save_path = save_path.replace('.dcm','.mha')
@@ -245,7 +266,7 @@ class Dcm2mha_cnvtr(ChrisApp):
         writer.SetFileName(path)
         writer.Execute(img)
              
-    def convert_to_dcm(self, mha_path,dicom_path,saveAsPng,imageName, filterPerc):
+    def convert_to_dcm(self, mha_path,dicom_path,saveAsPng,imageName, filterPerc,data):
         # parse input arguments
         # 1. img_filename: name of image file (incl. extension)
         img_filename = mha_path
@@ -258,6 +279,10 @@ class Dcm2mha_cnvtr(ChrisApp):
         list(map(lambda i: self.writeSlices( img, i, output_path), range(img.GetDepth())))
         
         if saveAsPng:
+            dim = ()
+            for key in data.keys():
+                if key in output_path:
+                    dim = data[key]
             files = glob.glob(output_path+"/*")
             sample = dicom.dcmread(files[0])
             sample = sample.pixel_array
@@ -266,13 +291,17 @@ class Dcm2mha_cnvtr(ChrisApp):
                 scaled_image = (np.maximum(new_image, 0) / new_image.max()) * 255.0
                 result = np.uint8(scaled_image)
             else:
-                result = np.zeros(sample.shape,dtype='uint8')
+                result = np.zeros(dim,dtype='uint8')
                 for file in files:
                     ds = dicom.dcmread(file)
                     new_image = ds.pixel_array.astype(float)
                     
+                    # resize image
+                    resized_image = resize(new_image, dim)
+                    
+                    
                     # scale the image in the range of 1:255
-                    scaled_image = (np.maximum(new_image, 0) / new_image.max()) * 255.0
+                    scaled_image = (np.maximum(resized_image, 0) / resized_image.max()) * 255.0
                     
                     # Maximum pixel value in the dicom image
                     max_value = scaled_image.max()

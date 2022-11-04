@@ -4,3 +4,4 @@ pydicom
 SimpleITK
 numpy
 pillow
+scikit-image
