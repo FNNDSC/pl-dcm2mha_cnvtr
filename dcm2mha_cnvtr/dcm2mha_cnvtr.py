@@ -191,6 +191,13 @@ class Dcm2mha_cnvtr(ChrisApp):
                             help         = 'Specify the lowest percentage of pixel values to be set to zero',
                             default      = "dimension.csv")
                             
+        self.add_argument(  '--resizePng','-z',
+                            dest         = 'resizePng',
+                            type         = bool,
+                            optional     = True,
+                            help         = 'Specify this flag if you want to resize the output PNGs',
+                            default      = False)
+                            
     def run(self, options):
         """
         Define the code to be run by this plugin app.
@@ -204,16 +211,20 @@ class Dcm2mha_cnvtr(ChrisApp):
             print("%20s: %-40s" % (k, v))
         print("")
         
-        csv_path = os.path.join(options.inputdir,options.dimensionFile)
-        
         data = {}
         
-        with open(csv_path, encoding='utf-8') as csvf:
-            csvReader = csv.reader(csvf)
+        if(options.resizePng):
+        
+            csv_path = os.path.join(options.inputdir,options.dimensionFile)
+        
+            with open(csv_path, encoding='utf-8') as csvf:
+                csvReader = csv.reader(csvf)
             
-            for rows in csvReader:
-                key = rows[0]
-                data[key] = (int(rows[1]),int(rows[2]))
+                for rows in csvReader:
+                    key = rows[0]
+                    data[key] = (int(rows[1]),int(rows[2]))
+                    
+                    
         
         str_glob = '%s/%s' % (options.inputdir,options.inputFileFilter)
         
@@ -279,13 +290,16 @@ class Dcm2mha_cnvtr(ChrisApp):
         list(map(lambda i: self.writeSlices( img, i, output_path), range(img.GetDepth())))
         
         if saveAsPng:
-            dim = ()
-            for key in data.keys():
-                if key in output_path:
-                    dim = data[key]
-            files = glob.glob(output_path+"/*")
+            
+            files = glob.glob(output_path+"/*.dcm")
             sample = dicom.dcmread(files[0])
             sample = sample.pixel_array
+            dim = sample.shape
+            if(data!={}):
+                for key in data.keys():
+                    if key in output_path:
+                        dim = data[key]
+
             if len(files) == 1:
                 new_image =sample.astype(float)
                 scaled_image = (np.maximum(new_image, 0) / new_image.max()) * 255.0
