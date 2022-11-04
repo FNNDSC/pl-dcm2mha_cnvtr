@@ -329,7 +329,7 @@ class Dcm2mha_cnvtr(ChrisApp):
             final_image = Image.fromarray(result)
             final_image.save(os.path.join(output_path,imageName))
             
-            print(f"Shape of the output PNG is {result.shape}")
+            print(f"Shape of the {os.path.join(output_path,imageName)} is {result.shape}")
 
     def writeSlices(self, img, i, output_path):
         castFilter = sitk.CastImageFilter()
