@@ -184,19 +184,6 @@ class Dcm2mha_cnvtr(ChrisApp):
                             help         = 'Specify the lowest percentage of pixel values to be set to zero',
                             default      = 30)
                             
-        self.add_argument(  '--dimensionFile','-d',
-                            dest         = 'dimensionFile',
-                            type         = str,
-                            optional     = True,
-                            help         = 'Specify the lowest percentage of pixel values to be set to zero',
-                            default      = "dimension.csv")
-                            
-        self.add_argument(  '--resizePng','-z',
-                            dest         = 'resizePng',
-                            type         = bool,
-                            optional     = True,
-                            help         = 'Specify this flag if you want to resize the output PNGs',
-                            default      = False)
                             
     def run(self, options):
         """
@@ -210,19 +197,6 @@ class Dcm2mha_cnvtr(ChrisApp):
         for k,v in d_options.items():
             print("%20s: %-40s" % (k, v))
         print("")
-        
-        data = {}
-        
-        if(options.resizePng):
-        
-            csv_path = os.path.join(options.inputdir,options.dimensionFile)
-        
-            with open(csv_path, encoding='utf-8') as csvf:
-                csvReader = csv.reader(csvf)
-            
-                for rows in csvReader:
-                    key = rows[0]
-                    data[key] = (int(rows[1]),int(rows[2]))
                     
                     
         
@@ -235,7 +209,7 @@ class Dcm2mha_cnvtr(ChrisApp):
                 save_path = datapath.split('/')[-1]
                 save_path = save_path.replace('.mha','')
                 save_path = os.path.join(options.outputdir,save_path)
-                self.convert_to_dcm(datapath,save_path,options.saveAsPng, options.imageName, options.filterPerc,data)
+                self.convert_to_dcm(datapath,save_path,options.saveAsPng, options.imageName, options.filterPerc)
             else:
                 save_path = datapath.split('/')[-1]
                 save_path = save_path.replace('.dcm','.mha')
@@ -277,7 +251,7 @@ class Dcm2mha_cnvtr(ChrisApp):
         writer.SetFileName(path)
         writer.Execute(img)
              
-    def convert_to_dcm(self, mha_path,dicom_path,saveAsPng,imageName, filterPerc,data):
+    def convert_to_dcm(self, mha_path,dicom_path,saveAsPng,imageName, filterPerc):
         # parse input arguments
         # 1. img_filename: name of image file (incl. extension)
         img_filename = mha_path
@@ -285,6 +259,8 @@ class Dcm2mha_cnvtr(ChrisApp):
         output_path = dicom_path
 
         img = sitk.ReadImage(img_filename)
+        
+        print(f"Shape of {img_filename} is {img.GetSize()}")
 
 
         list(map(lambda i: self.writeSlices( img, i, output_path), range(img.GetDepth())))
@@ -295,10 +271,6 @@ class Dcm2mha_cnvtr(ChrisApp):
             sample = dicom.dcmread(files[0])
             sample = sample.pixel_array
             dim = sample.shape
-            if(data!={}):
-                for key in data.keys():
-                    if key in output_path:
-                        dim = data[key]
 
             if len(files) == 1:
                 new_image =sample.astype(float)
