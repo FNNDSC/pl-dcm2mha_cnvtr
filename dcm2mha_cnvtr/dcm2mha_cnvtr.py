@@ -160,7 +160,7 @@ class Dcm2mha_cnvtr(ChrisApp):
                             dest         = 'saveAsPng',
                             type         = bool,
                             optional     = True,
-                            help         = 'Save .mha file as png',
+                            help         = 'If sepecified, save op file as png',
                             default      = False)
                             
         self.add_argument(  '--rotate','-r',
@@ -174,7 +174,7 @@ class Dcm2mha_cnvtr(ChrisApp):
                             dest         = 'imageName',
                             type         = str,
                             optional     = True,
-                            help         = 'Name of the png file',
+                            help         = 'Name of the output png file',
                             default      = 'composite.png')
                             
         self.add_argument(  '--filterPerc','-p',
