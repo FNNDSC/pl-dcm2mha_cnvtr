@@ -5,3 +5,4 @@ SimpleITK
 numpy
 pillow
 scikit-image
+loguru
