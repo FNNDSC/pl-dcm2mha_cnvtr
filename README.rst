@@ -133,7 +133,25 @@ Run unit tests:
 Examples
 --------
 
-Put some examples here!
+Convert a set of DICOM files in a directory called `dicom` to MHA files in a directory called `mha`:
+
+.. code:: bash
+
+    docker run -v $PWD/dicom:/incoming -v $PWD/mha:/outgoing    \
+                fnndsc/pl-dcm2mha_cnvtr dcm2mha_cnvtr           \
+                --inputFileFilter "**/*.dcm"                    \
+                /incoming /outgoing
+
+and convert these back to DICOM again
+
+.. code:: bash
+
+    docker run -v $PWD/mha:/incoming -v $PWD/dicom:/outgoing    \
+                fnndsc/pl-dcm2mha_cnvtr dcm2mha_cnvtr           \
+                --inputFileFilter "**/*.mha"                    \
+                /incoming /outgoing
+
+
 
 
 .. image:: https://raw.githubusercontent.com/FNNDSC/cookiecutter-chrisapp/master/doc/assets/badge/light.png

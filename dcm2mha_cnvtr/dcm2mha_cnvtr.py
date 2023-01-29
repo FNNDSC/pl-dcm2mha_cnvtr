@@ -32,6 +32,7 @@ logger_format = (
     "<level>{message}</level>"
 )
 logger.remove()
+logger.opt(colors = True)
 logger.add(sys.stderr, format=logger_format)
 
 
@@ -82,8 +83,9 @@ Gstr_synopsis = """
     DESCRIPTION
 
         `dcm2mha_cnvtr` is a *ChRIS ds-type* application that files of one
-        type as input and converts to a reciprocal type as output. The reciprocating
-        types of files are DICOM (dcm) and MetaImage Medical Foramt (mha).
+        type as input and converts to a reciprocal type as output. The
+        reciprocating types of files are DICOM (dcm) and MetaImage Medical
+        Format (mha).
 
     ARGS
 
@@ -245,11 +247,13 @@ class Dcm2mha_cnvtr(ChrisApp):
 
         for datapath in l_datapath:
             if(datapath.endswith('.mha')):
+                LOG('Converting mha to dcm...')
                 save_path = datapath.split('/')[-1]
                 save_path = save_path.replace('.mha','')
                 save_path = os.path.join(options.outputdir,save_path)
                 self.convert_to_dcm(datapath,save_path,options.saveAsPng, options.imageName, options.filterPerc)
             else:
+                LOG('Converting dcm to mha...')
                 save_path = datapath.split('/')[-1]
                 save_path = save_path.replace('.dcm','.mha')
                 save_dir = os.path.join(options.outputdir,'mha')
@@ -266,6 +270,7 @@ class Dcm2mha_cnvtr(ChrisApp):
         print(Gstr_synopsis)
 
     def convert_to_mha(self, dicom_path,mha_path,save_dir,rotate,compress=True):
+        LOG("Reading %s" % dicom_path)
         ds = dicom.dcmread(dicom_path)
         im = ds.pixel_array.astype(float)
 
@@ -276,7 +281,9 @@ class Dcm2mha_cnvtr(ChrisApp):
             final_image = np.rot90(final_image)
         final_image = np.expand_dims(final_image, axis=0)
 
+        LOG("Writing %s" % mha_path)
         self.write(sitk.GetImageFromArray(final_image), mha_path, save_dir, compress)
+        LOG("")
 
     def write(self,img, path, save_dir, compress=True):
         """
@@ -300,11 +307,13 @@ class Dcm2mha_cnvtr(ChrisApp):
         # 2. output_path: path of directory containing the output DICOM series
         output_path = dicom_path
 
+        LOG("Reading %s" % img_filename)
         img = sitk.ReadImage(img_filename)
 
-        print(f"Shape of {img_filename} is {img.GetSize()}")
+        LOG(f"Shape of {img_filename} is {img.GetSize()}")
 
-
+        LOG("Saving %s" % output_path)
+        LOG("")
         list(map(lambda i: self.writeSlices( img, i, output_path), range(img.GetDepth())))
 
         if saveAsPng:
