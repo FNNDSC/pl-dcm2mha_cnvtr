@@ -82,10 +82,10 @@ Gstr_synopsis = """
 
     DESCRIPTION
 
-        `dcm2mha_cnvtr` is a *ChRIS ds-type* application that files of one
-        type as input and converts to a reciprocal type as output. The
-        reciprocating types of files are DICOM (dcm) and MetaImage Medical
-        Format (mha).
+        `dcm2mha_cnvtr` is a *ChRIS ds-type* application that consumes
+        image files of one type as input and converts these files to a
+        reciprocal type as output. The reciprocating types of files are
+        DICOM (dcm) and MetaImage Medical Format (mha).
 
     ARGS
 

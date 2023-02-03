@@ -32,4 +32,4 @@ RUN pip install -r requirements.txt
 COPY . .
 RUN pip install .
 
-CMD ["dcm2mha_cnvtr", "--help"]
+CMD ["dcm2mha_cnvtr", "--man"]
