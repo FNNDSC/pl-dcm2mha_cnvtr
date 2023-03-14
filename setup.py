@@ -6,7 +6,7 @@ with open(path.join(path.dirname(path.abspath(__file__)), 'README.rst')) as f:
 
 setup(
     name             = 'dcm2mha_cnvtr',
-    version          = '1.1.12',
+    version          = '1.1.14',
     description      = 'An app to convert dcm files to mha and vice-versa',
     long_description = readme,
     author           = 'FNNDSC',
