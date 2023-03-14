@@ -6,3 +6,6 @@ numpy
 pillow
 scikit-image
 loguru
+pftag
+pflog
+pftel-client
