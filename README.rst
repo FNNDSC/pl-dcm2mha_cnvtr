@@ -17,7 +17,7 @@ pl-dcm2mha_cnvtr
 Abstract
 --------
 
-An app  to convert dcm files to mha and vice-versa
+An app that converts between DICOM and mha format files.
 
 
 Description
@@ -36,6 +36,7 @@ Usage
         [-n|--imageName <pngFileName>]
         [-p|--filterPerc <filterPercentage>]
         [-r| --rotate <rotateAngle>]
+        [--pftelDB <DBURLpath>]
         [-h|--help]
         [--json] [--man] [--meta]
         [--savejson <DIR>]
@@ -71,6 +72,25 @@ Arguments
         An integer value in multiples of 90 that represents a rotation
         angle. The input image will be rotated anticlockwise for the
         provide angle.
+
+        [--pftelDB <DBURLpath>]
+        If specified, send telemetry logging to the pftel server and the
+        specfied DBpath:
+
+            --pftelDB   <URLpath>/<logObject>/<logCollection>/<logEvent>
+
+        for example
+
+            --pftelDB http://localhost:22223/api/v1/weather/massachusetts/boston
+
+        Indirect parsing of each of the object, collection, event strings is
+        available through `pftag` so any embedded pftag SGML is supported. So
+
+            http://localhost:22223/api/vi/%platform/%timestamp_strmsk|**********_/%name
+
+        would be parsed to, for example:
+
+            http://localhost:22223/api/vi/Linux/2023-03-11/posix
 
         [-h] [--help]
         If specified, show help message and exit.
@@ -128,6 +148,10 @@ Run unit tests:
 .. code:: bash
 
     docker run --rm local/pl-dcm2mha_cnvtr nosetests
+
+Debug container using live-mount:
+
+
 
 Examples
 --------

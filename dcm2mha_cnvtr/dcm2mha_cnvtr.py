@@ -26,7 +26,7 @@ from    pflog               import pflog
 
 from    argparse            import Namespace
 from    datetime            import datetime
-
+import  pudb
 from    loguru              import logger
 LOG             = logger.debug
 
@@ -139,7 +139,6 @@ Gstr_synopsis = """
 
             http://localhost:22223/api/vi/Linux/2023-03-11/posix
 
-
         [-h] [--help]
         If specified, show help message and exit.
 
@@ -244,7 +243,6 @@ class Dcm2mha_cnvtr(ChrisApp):
         """
         Just show some preamble "noise" in the output terminal
         """
-
         LOG(Gstr_title)
         LOG('Version: %s' % self.get_version())
 
@@ -258,53 +256,21 @@ class Dcm2mha_cnvtr(ChrisApp):
              LOG("%25s:  [%s]" % (k, v))
         LOG("")
 
-    def epilogue(self, options:Namespace, dt_start:datetime = None) -> None:
-        """
-        Some epilogue cleanup -- basically determine a delta time
-        between passed epoch and current, and if indicated in CLI
-        pflog this.
-
-        Args:
-            options (Namespace): option space
-            dt_start (datetime): optional start date
-        """
-        tagger:pftag.Pftag  = pftag.Pftag({})
-        dt_end:datetime     = pftag.timestamp_dt(tagger(r'%timestamp')['result'])
-        ft:float            = 0.0
-        if dt_start:
-            ft              = (dt_end - dt_start).total_seconds()
-        if options.pftelDB:
-            options.pftelDB = '/'.join(options.pftelDB.split('/')[:-1] + ['dcm-to-mha'])
-            d_log:dict      = pflog.pfprint(
-                                options.pftelDB,
-                                f"Shutting down after {ft} seconds.",
-                                appName     = 'pl-dcm2mha_cnvtr',
-                                execTime    = ft
-                            )
-
-
+    @pflog.tel_logTime(
+            event       = 'dcm2mha_cnvtr',
+            log         = 'Convert DICOM to sitk mha format'
+    )
     def run(self, options):
         """
-        Define the code to be run by this plugin app.
+        Main entry point -- execTime is measured and logged with the decorator.
         """
         self.preamble_show(options)
-        # print(Gstr_title)
-        # print('Version: %s' % self.get_version())
-
-        # # Output the space of CLI
-        # d_options = vars(options)
-        # for k,v in d_options.items():
-        #     print("%20s: %-40s" % (k, v))
-        # print("")
-
 
         LOG("Starting conversion... ")
-        tagger:pftag.Pftag  = pftag.Pftag({})
-        dt_start:datetime   = pftag.timestamp_dt(tagger(r'%timestamp')['result'])
-        st: float = time.time()
-        str_glob = '%s/%s' % (options.inputdir,options.inputFileFilter)
-
-        l_datapath = glob.glob(str_glob, recursive=True)
+        str_glob:str            = '%s/%s' % (options.inputdir,options.inputFileFilter)
+        save_path:str           = ''
+        save_dir:str            = ''
+        l_datapath: list[str]   = glob.glob(str_glob, recursive=True)
 
         for datapath in l_datapath:
             if(datapath.endswith('.mha')):
@@ -320,17 +286,12 @@ class Dcm2mha_cnvtr(ChrisApp):
                 save_dir = os.path.join(options.outputdir,'mha')
                 save_path = os.path.join(options.outputdir,'mha',save_path)
                 self.convert_to_mha(datapath,save_path, save_dir,options.rotate)
-        et: float = time.time()
-        LOG("Execution time: %f seconds." % (et -st))
-        self.epilogue(options, dt_start)
 
     def show_man_page(self):
         """
         Print the app's man page.
         """
         print(Gstr_synopsis)
-
-
 
     def convert_to_mha(self, dicom_path,mha_path,save_dir,rotate,compress=True):
         LOG("Reading %s" % dicom_path)
