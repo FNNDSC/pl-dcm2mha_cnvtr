@@ -6,12 +6,12 @@ with open(path.join(path.dirname(path.abspath(__file__)), 'README.rst')) as f:
 
 setup(
     name             = 'dcm2mha_cnvtr',
-    version          = '1.2.24',
+    version          = '1.2.25',
     description      = 'An app to convert dcm files to mha and vice-versa',
     long_description = readme,
     author           = 'FNNDSC',
     author_email     = 'dev@babyMRI.org',
-    url              = 'http://wiki',
+    url              = 'https://github.com/FNNDSC/pl-dcm2mha_cnvtr#readme',
     packages         = ['dcm2mha_cnvtr'],
     install_requires = ['chrisapp'],
     test_suite       = 'nose.collector',
